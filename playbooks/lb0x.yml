@@ -1,0 +1,69 @@
+---
+- hosts: loadbalancer
+  become: true
+  tasks:
+    - name: get haproxy from apt-repository
+      apt_repository:
+          repo: ppa:vbernat/haproxy-1.7
+          state: present
+      tags:
+          - haproxy
+          - ppa
+
+    - name: install haproxy (repository-version)
+      apt:
+          name: "{{item}}"
+          state: present
+          update_cache: yes
+      with_items:
+        - haproxy
+      tags:
+          - haproxy
+
+    - name: ensure haproxy is running (and enable it at boot)
+      service:
+          name: haproxy
+          state: started
+          enabled: yes
+      tags:
+          - haproxy
+          - service
+
+    # replace 'mode http' by 'mode tcp'
+    - name: Check if mode is http
+      shell: grep 'mode http' /etc/haproxy/haproxy.cfg | cat
+      register: http_mode
+
+    - name: switch mode from http to tcp (haproxy.cfg)
+      lineinfile:
+          dest: /etc/haproxy/haproxy.cfg
+          state: present
+          regexp: '\s*\t*mode\s*\t*http'
+          line: '        mode tcp'
+      when: http_mode.stdout !=""
+    # END replace 'mode http' by 'mode tcp'
+
+    # replace 'option httplog' by 'option tcplog'
+    - name: Check if option is httplog
+      shell: grep 'option httplog' /etc/haproxy/haproxy.cfg | cat
+      register: option_httplog
+
+    - name: switch option from httplog to tcplog (haproxy.cfg)
+      lineinfile:
+          dest: /etc/haproxy/haproxy.cfg
+          state: present
+          regexp: '\s*\t*option\s*\t*httplog'
+          line: '        option tcplog'
+      when: option_httplog.stdout !=""
+    # END replace 'option httplog' by 'option tcplog'
+
+    # check if peering passage is existing
+    - name: Check if option is httplog
+      shell: grep '# loadbalancer peering' /etc/haproxy/haproxy.cfg | cat
+      register: loadbalancer_peering
+
+    - name: insert/update configuration using a local file
+      blockinfile:
+          dest: /etc/haproxy/haproxy.cfg
+          block: "{{ lookup('file', '/home/vagrant/ansible/haproxy_extension.cfg') }}"
+    # END check if peering passage is existing

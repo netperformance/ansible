@@ -1,0 +1,22 @@
+---
+- hosts: database
+  become: true
+  tasks:
+    - name: insall mysql-server
+      apt:
+          name: "{{item}}"
+          state: present
+          update_cache: yes
+      with_items:
+        - mysql-server
+      tags:
+          - mysql-server
+
+    - name: ensure mysql-server is running (and enable it at boot)
+      service:
+          name: mysql-server
+          state: started
+          enabled: yes
+      tags:
+          - mysql-server
+          - service
