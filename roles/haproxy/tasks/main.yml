@@ -2,7 +2,7 @@
 # tasks file for haproxy
 - name: get haproxy from apt-repository
   apt_repository:
-      repo: ppa:vbernat/haproxy-1.7
+      repo: "{{ repository }}"
       state: present
   tags:
       - haproxy
@@ -12,7 +12,7 @@
   apt:
       name: "{{item}}"
       state: present
-      update_cache: yes
+      #update_cache: yes
   with_items:
     - haproxy
   tags:

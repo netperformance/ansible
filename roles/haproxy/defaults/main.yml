@@ -1,2 +1,3 @@
 ---
 # defaults file for haproxy
+repository: ppa:vbernat/haproxy-1.7
